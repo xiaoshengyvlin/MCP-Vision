@@ -17,7 +17,7 @@ function stubServer(): { registered: RegisteredCall[]; server: any } {
   return { registered, server }
 }
 
-test('vision_ocr passes outputFormat into the OCR prompt', async () => {
+test('vision_ocr forwards outputFormat into the OCR prompt', async () => {
   const { registered, server } = stubServer()
   const calls: any[] = []
   const adapter = {
@@ -37,4 +37,23 @@ test('vision_ocr passes outputFormat into the OCR prompt', async () => {
 
   assert.match(calls[0].prompt, /Known language preference: en/)
   assert.match(calls[0].prompt, /Output format: Markdown/)
+})
+
+test('vision_ocr uses its default model when model is absent', async () => {
+  const { registered, server } = stubServer()
+  const calls: any[] = []
+  const adapter = {
+    async analyze(input: any) {
+      calls.push(input)
+      return { text: 'stub-result', model: 'stub-model', raw: {} }
+    }
+  }
+
+  registerVisionOcrTool(server, adapter as any, 'ocr-default-model')
+
+  await registered[0].handler({
+    imageUrl: 'https://example.com/receipt.png'
+  })
+
+  assert.equal(calls[0].model, 'ocr-default-model')
 })

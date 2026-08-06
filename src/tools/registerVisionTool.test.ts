@@ -115,6 +115,54 @@ test('registerVisionTool declares a structured output schema', () => {
   assert.ok(((registered[0].meta as any).outputSchema as Record<string, unknown>).model)
 })
 
+test('registerVisionTool uses def.defaultModel when model is not provided', async () => {
+  const { registered, server } = stubServer()
+  const { calls, adapter } = stubAdapter()
+
+  registerVisionTool(server, adapter as any, {
+    name: 'vision_default_model',
+    title: 'Default model test',
+    description: 'desc',
+    extraShape: {
+      prompt: z.string()
+    },
+    defaultModel: 'ocr-default-model',
+    buildPrompt: (args) => args.prompt as string
+  })
+
+  await registered[0].handler({
+    imageUrl: 'https://example.com/a.png',
+    prompt: 'hello'
+  })
+
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].model, 'ocr-default-model')
+})
+
+test('registerVisionTool prefers explicit model over def.defaultModel', async () => {
+  const { registered, server } = stubServer()
+  const { calls, adapter } = stubAdapter()
+
+  registerVisionTool(server, adapter as any, {
+    name: 'vision_explicit_model',
+    title: 'Explicit model test',
+    description: 'desc',
+    extraShape: {
+      prompt: z.string()
+    },
+    defaultModel: 'default-model',
+    buildPrompt: (args) => args.prompt as string
+  })
+
+  await registered[0].handler({
+    imageUrl: 'https://example.com/a.png',
+    prompt: 'hello',
+    model: 'explicit-model'
+  })
+
+  assert.equal(calls[0].model, 'explicit-model')
+})
+
 test('registerVisionTool surfaces loadImageInput failures', async () => {
   const { registered, server } = stubServer()
   const { adapter } = stubAdapter()

@@ -13,10 +13,10 @@ export interface VisionAnalyzeResult {
 }
 
 export interface OpenAICompatibleConfig {
-  apiBaseUrl: string
+  apiBaseUrl?: string
   apiPath: string
   apiKey?: string
-  defaultModel: string
+  defaultModel?: string
   timeoutMs: number
   maxTokens: number
 }
@@ -40,6 +40,9 @@ export class OpenAICompatibleVisionAdapter {
   constructor(private readonly config: OpenAICompatibleConfig) {}
 
   async analyze(input: VisionAnalyzeInput): Promise<VisionAnalyzeResult> {
+    if (!this.config.apiBaseUrl) {
+      throw new Error('VISION_API_BASE_URL 未配置')
+    }
     const model = input.model || this.config.defaultModel
     if (!model) {
       throw new Error('VISION_MODEL 未配置，且工具调用未传入 model')
@@ -90,7 +93,7 @@ export class OpenAICompatibleVisionAdapter {
         const upstreamMessage = data?.error?.message
         const summary = truncate(bodyText, 200)
         if (upstreamMessage) {
-          throw new Error(`上游视觉模型请求失败 (HTTP ${response.status}): ${upstreamMessage}`)
+          throw new Error(`上游视觉模型请求失败 (HTTP ${response.status}): ${truncate(upstreamMessage, 200)}`)
         }
         throw new Error(`上游视觉模型请求失败 (HTTP ${response.status}): ${summary}`)
       }
@@ -142,11 +145,11 @@ export function normalizeContent(data: OpenAICompatibleResponse): string {
   return ''
 }
 
-function withTrailingSlash(value: string): string {
+export function withTrailingSlash(value: string): string {
   return value.endsWith('/') ? value : `${value}/`
 }
 
-function safeParseJson(text: string): OpenAICompatibleResponse | null {
+export function safeParseJson(text: string): OpenAICompatibleResponse | null {
   if (!text) {
     return null
   }
@@ -157,20 +160,20 @@ function safeParseJson(text: string): OpenAICompatibleResponse | null {
   }
 }
 
-function truncate(text: string, max: number): string {
+export function truncate(text: string, max: number): string {
   if (text.length <= max) {
     return text
   }
   return `${text.slice(0, max)}…`
 }
 
-function wrapFetchError(error: unknown, timeoutMs: number): Error {
+export function wrapFetchError(error: unknown, timeoutMs: number, label = '视觉模型'): Error {
   if (error instanceof Error) {
     if (error.name === 'AbortError') {
-      return new Error(`上游视觉模型请求超时 (${timeoutMs}ms)`)
+      return new Error(`上游${label}请求超时 (${timeoutMs}ms)`)
     }
     if (error instanceof TypeError) {
-      return new Error(`无法连接到上游视觉模型 API: ${error.message}`)
+      return new Error(`无法连接到上游${label} API: ${error.message}`)
     }
     return error
   }

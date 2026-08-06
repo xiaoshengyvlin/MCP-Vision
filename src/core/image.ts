@@ -43,6 +43,7 @@ export function createImageInputSchema<T extends z.core.$ZodLooseShape>(extraSha
         .describe('Remote URL, data URL, or file URL. Mutually exclusive with imagePath and imageBase64.'),
       imageBase64: z
         .base64()
+        .max(20_000_000)
         .optional()
         .describe(
           'Base64-encoded image payload. Use this for uploaded attachments when the client can pass file contents.'

@@ -5,14 +5,20 @@ import type { OpenAICompatibleVisionAdapter } from '../adapters/openaiCompatible
 import { buildAnalyzePrompt } from '../core/prompts.js'
 import { registerVisionTool } from './registerVisionTool.js'
 
-export function registerVisionAnalyzeTool(server: McpServer, adapter: OpenAICompatibleVisionAdapter) {
+export function registerVisionAnalyzeTool(
+  server: McpServer,
+  adapter: OpenAICompatibleVisionAdapter,
+  defaultModel?: string
+) {
   registerVisionTool(server, adapter, {
     name: 'vision_analyze',
     title: 'Analyze an image with a vision model',
-    description: 'Analyze a local image path, remote URL, file URL, data URL, or uploaded base64 image payload.',
+    description:
+      'Understand, explain, or describe an image using a vision model. Use for interpreting screenshots, UI, diagrams, charts, or error messages that need reasoning. Not for verbatim text extraction (use vision_ocr).',
     extraShape: {
       prompt: z.string().min(1).describe('Instruction passed to the vision model.')
     },
+    defaultModel,
     buildPrompt: (args) => buildAnalyzePrompt(args.prompt as string)
   })
 }

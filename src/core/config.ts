@@ -1,14 +1,28 @@
+import { OpenAICompatibleImageGenAdapter } from '../adapters/imageGen.js'
 import { OpenAICompatibleVisionAdapter } from '../adapters/openaiCompatible.js'
 
 interface RuntimeConfig {
-  apiBaseUrl: string
+  apiBaseUrl?: string
   apiPath: string
   apiKey?: string
-  defaultModel: string
+  defaultModel?: string
+  visionAnalyzeModel?: string
+  visionBackupApiBaseUrl?: string
+  visionBackupApiPath: string
+  visionBackupApiKey?: string
+  visionBackupModel?: string
   timeoutMs: number
   maxTokens: number
   serverName: string
   serverVersion: string
+}
+
+export interface ImageGenConfig {
+  apiBaseUrl?: string
+  apiPath: string
+  apiKey?: string
+  defaultModel?: string
+  timeoutMs: number
 }
 
 interface CliOptions {
@@ -131,7 +145,14 @@ export function getHelpText(): string {
     '  CLI 参数 > 环境变量 > 默认值',
     '',
     'Environment fallback:',
-    '  VISION_API_BASE_URL, VISION_API_PATH, VISION_API_KEY, VISION_MODEL, VISION_TIMEOUT_MS, VISION_MAX_TOKENS'
+    '  VISION_API_BASE_URL, VISION_API_PATH, VISION_API_KEY, VISION_MODEL, VISION_TIMEOUT_MS, VISION_MAX_TOKENS',
+    '  VISION_ANALYZE_MODEL (override analyze default model, falls back to VISION_MODEL)',
+    '  VISION_BACKUP_API_BASE_URL, VISION_BACKUP_API_PATH, VISION_BACKUP_API_KEY, VISION_BACKUP_MODEL',
+    '  (dedicated backup vision endpoint for vision_ocr, each falls back to the matching VISION_* value when unset)',
+    '',
+    'Image generation (image_generate):',
+    '  IMAGE_API_BASE_URL, IMAGE_API_PATH, IMAGE_API_KEY, IMAGE_MODEL, IMAGE_TIMEOUT_MS',
+    '  Each IMAGE_* value falls back to the matching VISION_* value when unset.'
   ].join('\n')
 }
 
@@ -139,18 +160,40 @@ export function getRuntimeConfig(argv = process.argv.slice(2)): RuntimeConfig {
   const cli = parseCliArgs(argv)
 
   return {
-    apiBaseUrl: requireValue('apiBaseUrl', cli.apiBaseUrl || readEnv('VISION_API_BASE_URL')),
+    apiBaseUrl: cli.apiBaseUrl || readEnv('VISION_API_BASE_URL'),
     apiPath: cli.apiPath || readEnv('VISION_API_PATH') || '/v1/chat/completions',
     apiKey: cli.apiKey || readEnv('VISION_API_KEY'),
-    defaultModel: requireValue('defaultModel', cli.defaultModel || readEnv('VISION_MODEL')),
+    defaultModel: cli.defaultModel || readEnv('VISION_MODEL'),
+    visionAnalyzeModel: readEnv('VISION_ANALYZE_MODEL'),
+    visionBackupApiBaseUrl:
+      readEnv('VISION_BACKUP_API_BASE_URL') || cli.apiBaseUrl || readEnv('VISION_API_BASE_URL'),
+    visionBackupApiPath:
+      readEnv('VISION_BACKUP_API_PATH') || cli.apiPath || readEnv('VISION_API_PATH') || '/v1/chat/completions',
+    visionBackupApiKey: readEnv('VISION_BACKUP_API_KEY') || cli.apiKey || readEnv('VISION_API_KEY'),
+    visionBackupModel: readEnv('VISION_BACKUP_MODEL'),
     timeoutMs: cli.timeoutMs || readNumberValue(readEnv('VISION_TIMEOUT_MS'), 60000),
     maxTokens: cli.maxTokens || readNumberValue(readEnv('VISION_MAX_TOKENS'), 4096),
     serverName: cli.serverName || readEnv('MCP_SERVER_NAME') || 'mcp-vision-server',
-    serverVersion: cli.serverVersion || readEnv('MCP_SERVER_VERSION') || '0.1.3'
+    serverVersion: cli.serverVersion || readEnv('MCP_SERVER_VERSION') || '0.1.4'
   }
 }
 
-export function createVisionAdapter(config = getRuntimeConfig()) {
+export function getImageGenConfig(): ImageGenConfig {
+  return {
+    apiBaseUrl: readEnv('IMAGE_API_BASE_URL') || readEnv('VISION_API_BASE_URL'),
+    apiPath: readEnv('IMAGE_API_PATH') || '/v1/images/generations',
+    apiKey: readEnv('IMAGE_API_KEY') || readEnv('VISION_API_KEY'),
+    defaultModel: readEnv('IMAGE_MODEL') || readEnv('VISION_MODEL'),
+    timeoutMs: readNumberValue(readEnv('IMAGE_TIMEOUT_MS'), 120000)
+  }
+}
+
+type VisionAdapterConfig = Pick<
+  RuntimeConfig,
+  'apiBaseUrl' | 'apiPath' | 'apiKey' | 'defaultModel' | 'timeoutMs' | 'maxTokens'
+>
+
+export function createVisionAdapter(config: VisionAdapterConfig = getRuntimeConfig()) {
   return new OpenAICompatibleVisionAdapter({
     apiBaseUrl: config.apiBaseUrl,
     apiPath: config.apiPath,
@@ -159,6 +202,10 @@ export function createVisionAdapter(config = getRuntimeConfig()) {
     timeoutMs: config.timeoutMs,
     maxTokens: config.maxTokens
   })
+}
+
+export function createImageGenAdapter(config = getImageGenConfig()) {
+  return new OpenAICompatibleImageGenAdapter(config)
 }
 
 export function getServerMeta(config = getRuntimeConfig()) {

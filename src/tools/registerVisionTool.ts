@@ -22,6 +22,7 @@ export interface VisionToolDefinition {
   title: string
   description: string
   extraShape: z.core.$ZodLooseShape
+  defaultModel?: string
   buildPrompt: (args: Record<string, unknown>) => string
 }
 
@@ -55,7 +56,7 @@ export function registerVisionTool(
       const result = await adapter.analyze({
         prompt: def.buildPrompt(extraArgs),
         imageUrl: image.imageUrl,
-        model,
+        model: model ?? def.defaultModel,
         detail,
         maxTokens
       })
