@@ -22,8 +22,14 @@
 | `VISION_API_KEY` | 视觉 Key | 必填 |
 | `VISION_MODEL` | 默认视觉模型 | 必填 |
 | `VISION_ANALYZE_MODEL` | analyze 专用模型 | 回退 `VISION_MODEL` |
+| `VISION_BACKUP_API_BASE_URL` | ocr 备用视觉平台地址 | 回退 `VISION_API_BASE_URL` |
+| `VISION_BACKUP_API_KEY` | ocr 备用视觉 Key | 回退 `VISION_API_KEY` |
 | `VISION_BACKUP_MODEL` | ocr 备用视觉模型 | 回退 `VISION_MODEL` |
+| `IMAGE_API_BASE_URL` | 生图 API 根地址 | 回退 `VISION_API_BASE_URL` |
+| `IMAGE_API_KEY` | 生图 Key | 回退 `VISION_API_KEY` |
 | `IMAGE_MODEL` | 生图模型 | 回退 `VISION_MODEL` |
+| `VISION_TIMEOUT_MS` | 视觉超时（毫秒） | `60000` |
+| `IMAGE_TIMEOUT_MS` | 生图超时（毫秒） | `120000` |
 
 OpenCode 配置：
 
@@ -37,6 +43,8 @@ OpenCode 配置：
         "VISION_API_BASE_URL": "...",
         "VISION_API_KEY": "...",
         "VISION_MODEL": "...",
+        "IMAGE_API_BASE_URL": "...",
+        "IMAGE_API_KEY": "...",
         "IMAGE_MODEL": "..."
       },
       "enabled": true
