@@ -52,8 +52,14 @@ OpenCode 配置：
 - 新增 `VISION_ANALYZE_MODEL` 工具级模型覆盖
 - 加固：仅允许 http/https 下载、base64 大小上限、错误信息截断、多图全返回、空配置可启动
 
-## 开发
+## 安装
 
 ```bash
-npm install && npm run build && npm run test
+# 方式一：本地克隆后安装
+git clone https://github.com/xiaoshengyvlin/MCP-Vision.git
+cd MCP-Vision
+npm install -g .
+
+# 方式二：tarball 安装
+npm pack && npm install -g mcp-vision-server-0.1.4.tgz
 ```
