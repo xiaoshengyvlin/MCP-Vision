@@ -72,5 +72,5 @@ npm install -g .
 npm pack && npm install -g mcp-vision-server-0.1.4.tgz
 ```
 
-# 方式三：AI 安装
+# AI 安装（推荐）
 帮我安装这个项目：https://github.com/xiaoshengyvlin/MCP-Vision
