@@ -1,4 +1,4 @@
-# mcp-vision-server
+# MCP-Vision
 
 基于 [goehou/Visual-Enhancement-mcp](https://github.com/goehou/Visual-Enhancement-mcp)（MIT）魔改的 MCP 服务，接入 OpenAI 兼容 API，提供看图、识字、生图。
 
